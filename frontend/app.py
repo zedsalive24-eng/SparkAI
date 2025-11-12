@@ -2,8 +2,6 @@
 import streamlit as st
 import requests
 
-API_URL = "https://sparkai-6g2p.onrender.com/ask"
-
 
 st.set_page_config(
     page_title="SparkAI | Electrical Intelligence",
@@ -120,8 +118,11 @@ with right:
 if trigger and question:
     with st.spinner("Tracing standards and synthesising response..."):
         try:
+
+            API_URL = "https://sparkai-6g2p.onrender.com/ask"
+            
             resp = requests.post(
-                "http://127.0.0.1:8000/ask",
+                API_URL,
                 json={"question": question},
                 timeout=90,
             )
