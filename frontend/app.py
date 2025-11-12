@@ -2,6 +2,9 @@
 import streamlit as st
 import requests
 
+API_URL = "https://sparkai-6g2p.onrender.com/ask"
+
+
 st.set_page_config(
     page_title="SparkAI | Electrical Intelligence",
     page_icon="S",
