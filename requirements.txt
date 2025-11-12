@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pypdf
+langchain
+langchain-community
+langchain-openai
+python-dotenv
+chromadb
+tiktoken
+streamlit
+cryptography>=3.1 
