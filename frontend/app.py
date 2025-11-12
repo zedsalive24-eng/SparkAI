@@ -2,6 +2,11 @@
 import streamlit as st
 import requests
 
+# -------------------------
+# SESSION STATE FOR CHAT
+# -------------------------
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []  # list of {"q": "...", "a": "..."}
 
 st.set_page_config(
     page_title="SparkAI | Electrical Intelligence",
@@ -9,6 +14,9 @@ st.set_page_config(
     layout="wide",
 )
 
+# -------------------------
+# STYLE
+# -------------------------
 st.markdown(
     """
     <style>
@@ -58,11 +66,28 @@ st.markdown(
             padding: 1.5rem;
             border-radius: 1rem;
         }
+        .chat-entry {
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(20,25,35,0.7);
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 0.8rem;
+        }
+        .chat-question {
+            color: var(--sparky-yellow);
+            font-weight: 600;
+        }
+        .chat-answer {
+            margin-top: 0.3rem;
+        }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+# -------------------------
+# HEADER
+# -------------------------
 st.markdown(
     """
     <div class="sparky-shell">
@@ -79,6 +104,34 @@ st.markdown(
 
 st.write("")
 
+# -------------------------
+# CHAT HISTORY DISPLAY
+# -------------------------
+st.subheader("Conversation History")
+
+if st.session_state.chat_history:
+    for entry in reversed(st.session_state.chat_history):
+        st.markdown(
+            f"""
+            <div class='chat-entry'>
+                <div class='chat-question'>You:</div>
+                <div>{entry["q"]}</div>
+                <div class='chat-answer'><span class='chat-question'>SparkAI:</span> {entry["a"]}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+else:
+    st.caption("No previous questions yet — start your session below.")
+
+# Clear chat button
+if st.button("🧹 Clear Chat History"):
+    st.session_state.chat_history = []
+    st.experimental_rerun()
+
+# -------------------------
+# MAIN LAYOUT
+# -------------------------
 left, right = st.columns((1.4, 1))
 
 with left:
@@ -115,10 +168,12 @@ with right:
             unsafe_allow_html=True,
         )
 
+# -------------------------
+# ASK BACKEND
+# -------------------------
 if trigger and question:
     with st.spinner("Tracing standards and synthesising response..."):
         try:
-
             API_URL = "https://sparkai-6g2p.onrender.com/ask"
             
             resp = requests.post(
@@ -130,6 +185,10 @@ if trigger and question:
                 payload = resp.json()
                 answer = payload.get("answer", "No answer received.")
                 confidence = payload.get("confidence")
+
+                # ✅ Store Q&A in chat history
+                st.session_state.chat_history.append({"q": question, "a": answer})
+
                 with response_container:
                     st.markdown("#### Advisory Output")
                     st.markdown(f'<div class="answer-block">{answer}</div>', unsafe_allow_html=True)
@@ -144,6 +203,9 @@ if trigger and question:
 elif trigger and not question:
     st.warning("Provide a detailed question so SparkAI can reference the correct clauses.")
 
+# -------------------------
+# FOOTER
+# -------------------------
 st.markdown(
     """
     ---
