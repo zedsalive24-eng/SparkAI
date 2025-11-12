@@ -127,7 +127,7 @@ else:
 # Clear chat button
 if st.button("🧹 Clear Chat History"):
     st.session_state.chat_history = []
-    st.experimental_rerun()
+    st.rerun()
 
 # -------------------------
 # MAIN LAYOUT
