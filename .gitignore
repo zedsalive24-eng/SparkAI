@@ -6,6 +6,7 @@ __pycache__/
 # Local environment files (API keys, secrets, etc.)
 .env
 backend/.env
+backend/logs/
 
 # OS/system files
 .DS_Store
