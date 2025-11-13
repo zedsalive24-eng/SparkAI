@@ -192,7 +192,7 @@ else:
     st.caption("No previous questions yet — start your session below.")
 
 # Clear chat button
-if st.button("🧹 Clear Chat History"):
+if st.button("Clear Chat History"):
     st.session_state.chat_history = []
     st.rerun()
 
