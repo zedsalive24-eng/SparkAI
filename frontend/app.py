@@ -22,17 +22,9 @@ st.set_page_config(
 # -------------------------
 API_BASE = "https://sparkai-6g2p.onrender.com"
 
-def check_backend_health():
-    try:
-        resp = requests.get(f"{API_BASE}/health", timeout=5)
-        if resp.status_code == 200 and resp.json().get("status") == "online":
-            return "🟢 Backend Online"
-        else:
-            return "🔴 Backend Offline"
-    except Exception:
-        return "🔴 Backend Offline"
 
-backend_status = check_backend_health()
+
+
 
 # -------------------------
 # STYLE
@@ -175,11 +167,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Health indicator (top right)
-st.markdown(
-    f"<p class='status-text'>{backend_status}</p>",
-    unsafe_allow_html=True,
-)
+
 
 st.write("")
 
@@ -251,7 +239,7 @@ with right:
 # ASK BACKEND
 # -------------------------
 if trigger and question:
-    with st.spinner("Tracing standards and synthesising response..."):
+    with st.spinner("Thinking..."):
         try:
             resp = requests.post(
                 f"{API_BASE}/ask",
