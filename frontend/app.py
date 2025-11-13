@@ -8,11 +8,31 @@ import requests
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []  # list of {"q": "...", "a": "..."}
 
+# -------------------------
+# PAGE CONFIG
+# -------------------------
 st.set_page_config(
     page_title="SparkAI | Electrical Intelligence",
     page_icon="S",
     layout="wide",
 )
+
+# -------------------------
+# BACKEND HEALTH CHECK
+# -------------------------
+API_BASE = "https://sparkai-6g2p.onrender.com"
+
+def check_backend_health():
+    try:
+        resp = requests.get(f"{API_BASE}/health", timeout=5)
+        if resp.status_code == 200 and resp.json().get("status") == "online":
+            return "🟢 Backend Online"
+        else:
+            return "🔴 Backend Offline"
+    except Exception:
+        return "🔴 Backend Offline"
+
+backend_status = check_backend_health()
 
 # -------------------------
 # STYLE
@@ -23,14 +43,21 @@ st.markdown(
         :root {
             --sparky-yellow: #f8d056;
             --sparky-slate: #0c1118;
-            --sparky-graphite: #18202c;
-            --sparky-line: rgba(248, 208, 86, 0.35);
+            --sparky-graphite: #1a1f27;
+            --sparky-line: rgba(248, 208, 86, 0.25);
+            --sparky-text: #e5e7eb;
+            --sparky-muted: #8b92a1;
+            --sparky-panel: #12161d;
         }
+
         [data-testid="stAppViewContainer"] {
             background: radial-gradient(circle at top right, #1f2c3f, #090c11);
-            color: #edf1f7;
+            color: var(--sparky-text);
+            font-family: 'Inter', sans-serif;
         }
+
         [data-testid="stHeader"] {background: transparent;}
+
         .sparky-shell {
             border: 1px solid var(--sparky-line);
             background: linear-gradient(135deg, rgba(22,30,45,0.95), rgba(9,12,17,0.9));
@@ -38,34 +65,71 @@ st.markdown(
             border-radius: 1.5rem;
             box-shadow: 0 25px 60px rgba(0,0,0,0.35);
         }
+
         .sparky-pill {
             letter-spacing: 0.3rem;
             font-size: 0.82rem;
             text-transform: uppercase;
             color: var(--sparky-yellow);
         }
-        .grid-panel {
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(15,20,30,0.8);
-            padding: 1.5rem;
-            border-radius: 1rem;
-            height: 100%;
-        }
-        .grid-panel h4 {margin-bottom: 0.5rem; color: var(--sparky-yellow);}
+
         .spark-line {
             height: 2px;
             background: linear-gradient(90deg, transparent, var(--sparky-yellow), transparent);
             margin: 1rem 0 1.5rem;
         }
-        textarea, input {
-            border-radius: 0.6rem !important;
-        }
-        .answer-block {
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(8, 13, 22, 0.9);
+
+        .grid-panel {
+            border: 1px solid rgba(255,255,255,0.08);
+            background: var(--sparky-panel);
             padding: 1.5rem;
             border-radius: 1rem;
+            height: 100%;
         }
+
+        .grid-panel h4 {
+            margin-bottom: 0.5rem;
+            color: var(--sparky-yellow);
+        }
+
+        textarea, input, .stTextArea textarea {
+            background-color: #1f242d !important;
+            color: var(--sparky-text) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            border-radius: 0.8rem !important;
+            padding: 0.9rem !important;
+            font-size: 0.95rem !important;
+        }
+
+        textarea:focus, input:focus, .stTextArea textarea:focus {
+            border: 1px solid var(--sparky-yellow) !important;
+            outline: none !important;
+            box-shadow: 0 0 0 1px var(--sparky-yellow);
+        }
+
+        div.stButton > button {
+            background: var(--sparky-yellow);
+            color: #111;
+            border-radius: 0.7rem;
+            font-weight: 600;
+            border: none;
+            height: 2.8rem;
+            transition: all 0.2s ease;
+        }
+
+        div.stButton > button:hover {
+            background: #ffd95c;
+            transform: scale(1.02);
+        }
+
+        .answer-block {
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(12, 17, 25, 0.9);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            line-height: 1.6;
+        }
+
         .chat-entry {
             border: 1px solid rgba(255,255,255,0.08);
             background: rgba(20,25,35,0.7);
@@ -73,12 +137,21 @@ st.markdown(
             border-radius: 1rem;
             margin-bottom: 0.8rem;
         }
+
         .chat-question {
             color: var(--sparky-yellow);
             font-weight: 600;
         }
+
         .chat-answer {
             margin-top: 0.3rem;
+        }
+
+        .status-text {
+            text-align: right;
+            color: var(--sparky-muted);
+            font-size: 0.9rem;
+            margin-top: -2.5rem;
         }
     </style>
     """,
@@ -99,6 +172,12 @@ st.markdown(
         <div class="spark-line"></div>
     </div>
     """,
+    unsafe_allow_html=True,
+)
+
+# Health indicator (top right)
+st.markdown(
+    f"<p class='status-text'>{backend_status}</p>",
     unsafe_allow_html=True,
 )
 
@@ -174,10 +253,8 @@ with right:
 if trigger and question:
     with st.spinner("Tracing standards and synthesising response..."):
         try:
-            API_URL = "https://sparkai-6g2p.onrender.com/ask"
-            
             resp = requests.post(
-                API_URL,
+                f"{API_BASE}/ask",
                 json={"question": question},
                 timeout=90,
             )
@@ -186,7 +263,6 @@ if trigger and question:
                 answer = payload.get("answer", "No answer received.")
                 confidence = payload.get("confidence")
 
-                # ✅ Store Q&A in chat history
                 st.session_state.chat_history.append({"q": question, "a": answer})
 
                 with response_container:
